@@ -39,6 +39,15 @@ function formatTimeRange(start, end) {
   return `${formatTimeLabel(start)}–${formatTimeLabel(end)}`
 }
 
+function splitLocationName(name = '') {
+  const idx = name.indexOf('-')
+  if (idx === -1) return { primary: name.trim(), secondary: '' }
+  return {
+    primary: name.slice(0, idx).trim(),
+    secondary: name.slice(idx + 1).trim(),
+  }
+}
+
 function getSessionType(title = '') {
   const t = title.toLowerCase()
   if (t.includes('pool closed')) return 'closed'
@@ -149,7 +158,10 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
           </div>
 
           <ul className="divide-y divide-slate-100">
-            {day.locations.map((location) => (
+            {day.locations.map((location) => {
+              const { primary, secondary } = splitLocationName(location.name)
+
+              return (
               <li
                 key={location.name}
                 className="flex"
@@ -160,8 +172,9 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
                   style={{ width: LEFT_COL_WIDTH }}
                 >
                   <p className={`${compactMode ? 'text-[11px]' : 'text-xs'} font-semibold text-slate-900`}>
-                    {location.name}
+                    {primary}
                   </p>
+                  {secondary && <p className="mt-0.5 text-[10px] leading-tight text-slate-500">{secondary}</p>}
                   <p className="mt-1 hidden text-[11px] text-slate-500 sm:block">{location.items.length} session(s)</p>
                 </div>
 
@@ -205,7 +218,8 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
                   })}
                 </div>
               </li>
-            ))}
+              )
+            })}
           </ul>
         </div>
       </div>

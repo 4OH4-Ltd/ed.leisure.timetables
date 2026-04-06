@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+const APP_VERSION = __APP_VERSION__
 const STEP_MINUTES = 15
 const PX_PER_MINUTE = 2
 const LEFT_COL_WIDTH = 140
@@ -443,7 +444,7 @@ export default function App() {
             Royal Commonwealth Pool timetable in a day-by-day grid view.
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Source: {data.source}
+            Version: v{APP_VERSION} • Source: {data.source}
             {data.updatedAt ? ` • Updated ${new Date(data.updatedAt).toLocaleString('en-GB')}` : ''}
           </p>
         </header>

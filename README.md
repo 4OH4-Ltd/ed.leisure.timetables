@@ -51,6 +51,13 @@ GitHub Pages deploys automatically via `.github/workflows/deploy-pages.yml` on:
 - manual run (`workflow_dispatch`)
 - every 2 hours (scheduled refresh)
 
+## Releases & Versioning
+
+- Semantic releases run on push to `main` via `.github/workflows/release.yml`.
+- Conventional Commits determine version bumps.
+- Releases update `package.json`, `package-lock.json`, and `CHANGELOG.md`, then publish a GitHub Release.
+- Deployed app shows the current package version in the header.
+
 ## Contributing
 
 Please see [`CONTRIBUTING.md`](./CONTRIBUTING.md).

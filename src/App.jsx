@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 const STEP_MINUTES = 15
 const PX_PER_MINUTE = 2
-const LEFT_COL_WIDTH = 180
+const LEFT_COL_WIDTH = 140
 
 function toDateTime(value) {
   return new Date(value.replace(' ', 'T'))
@@ -162,7 +162,7 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
                   <p className={`${compactMode ? 'text-[11px]' : 'text-xs'} font-semibold text-slate-900`}>
                     {location.name}
                   </p>
-                  <p className="mt-1 text-[11px] text-slate-500">{location.items.length} session(s)</p>
+                  <p className="mt-1 hidden text-[11px] text-slate-500 sm:block">{location.items.length} session(s)</p>
                 </div>
 
                 <div

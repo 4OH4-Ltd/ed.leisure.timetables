@@ -42,7 +42,7 @@ function formatTimeRange(start, end) {
 function getSessionType(title = '') {
   const t = title.toLowerCase()
   if (t.includes('pool closed')) return 'closed'
-  if (t.includes('lane swimming')) return 'lane'
+  if (t.includes('lane swimming') || t.includes('casual swimming')) return 'lane'
   if (t.includes('family fun')) return 'family'
   if (t.includes('lesson') || t.includes('learn to swim')) return 'lesson'
   return 'other'

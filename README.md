@@ -50,3 +50,28 @@ GitHub Pages deploys automatically via `.github/workflows/deploy-pages.yml` on:
 - pushes to `main`
 - manual run (`workflow_dispatch`)
 - every 2 hours (scheduled refresh)
+
+## Contributing
+
+Contributions are welcome.
+
+1. Fork the repo and create a branch.
+2. Run:
+   - `npm install`
+   - `npm run fetch:data`
+   - `npm run build`
+3. Keep changes focused (UI tweak, data feed tweak, or docs tweak).
+4. Open a PR with:
+   - what changed
+   - why
+   - screenshots for UI changes
+
+### Adding a new swim venue
+
+Edit `scripts/fetch-schedules.mjs` and add a new feed entry with:
+
+- `categoryId: '34'`
+- the venue `postId`
+- a clear `name` and `key`
+
+Then run `npm run fetch:data` and commit the updated `public/data/schedules.json`.

@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.0.1...v1.1.0) (2026-04-06)
+
+
+### Features
+
+* **ui:** add scalable dark mode via browser color-scheme ([f7dca7c](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/f7dca7cdd3d341ab982575a79e31ec49dbfa1002))
+
 ## [1.0.1](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.0.0...v1.0.1) (2026-04-06)
 
 

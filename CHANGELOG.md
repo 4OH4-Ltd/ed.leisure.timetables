@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.0.0...v1.0.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* **release:** allow CI on release commits for versioned deploys ([dc853a5](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/dc853a5f6cdbdae72839511c881fb9f85685d66b))
+
 # 1.0.0 (2026-04-06)
 
 

@@ -268,7 +268,7 @@ export default function App() {
       const params = new URLSearchParams(window.location.search)
       const fromUrl = parseCsvParam(params, 'venues')
       const valid = fromUrl.filter((v) => allVenues.includes(v))
-      setSelectedVenues(valid.length ? valid : allVenues)
+      setSelectedVenues(valid)
       venuesInitRef.current = true
       return
     }
@@ -277,6 +277,7 @@ export default function App() {
   }, [allVenues])
 
   const venueFilteredItems = useMemo(() => {
+    if (!selectedVenues.length) return data.items ?? []
     const allowed = new Set(selectedVenues)
     return (data.items ?? []).filter((item) => allowed.has(item.venue_name || 'Unknown venue'))
   }, [data.items, selectedVenues])
@@ -296,15 +297,12 @@ export default function App() {
       const params = new URLSearchParams(window.location.search)
       const fromUrl = parseCsvParam(params, 'locations')
       const valid = fromUrl.filter((v) => allLocations.includes(v))
-      setSelectedLocations(valid.length ? valid : allLocations)
+      setSelectedLocations(valid)
       locationsInitRef.current = true
       return
     }
 
-    setSelectedLocations((prev) => {
-      const valid = prev.filter((loc) => allLocations.includes(loc))
-      return valid.length ? valid : allLocations
-    })
+    setSelectedLocations((prev) => prev.filter((loc) => allLocations.includes(loc)))
   }, [allLocations])
 
   useEffect(() => {
@@ -327,6 +325,7 @@ export default function App() {
   }, [selectedVenues, selectedLocations, compactMode])
 
   const filteredItems = useMemo(() => {
+    if (!selectedLocations.length) return venueFilteredItems
     const allowed = new Set(selectedLocations)
     return venueFilteredItems.filter((item) => allowed.has(item.location_name || 'Unknown location'))
   }, [venueFilteredItems, selectedLocations])

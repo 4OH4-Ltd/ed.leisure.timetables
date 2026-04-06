@@ -371,8 +371,8 @@ export default function App() {
   const toggleVenue = (venue) => {
     autoScrollRef.current = false
     setSelectedVenues((prev) => {
-      if (prev.includes(venue)) return prev.filter((v) => v !== venue)
-      return [...prev, venue]
+      if (prev.length === 1 && prev[0] === venue) return []
+      return [venue]
     })
   }
 

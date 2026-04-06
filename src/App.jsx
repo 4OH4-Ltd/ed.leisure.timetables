@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const STEP_MINUTES = 15
 const PX_PER_MINUTE = 2
@@ -64,7 +64,19 @@ async function loadData() {
   return { ...data, source: data?.source || 'github-actions-fetch' }
 }
 
-function DayGrid({ day, nowMinutes, isToday, onSelectItem }) {
+function parseCsvParam(params, key) {
+  const raw = params.get(key)
+  if (!raw) return []
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
+function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScrollToNow }) {
+  const scrollerRef = useRef(null)
+  const didAutoScrollRef = useRef(false)
+
   const minStart = Math.min(...day.items.map((i) => i.startMinutes))
   const maxEnd = Math.max(...day.items.map((i) => i.endMinutes))
   const dayStart = roundDownToStep(minStart)
@@ -77,6 +89,17 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem }) {
   const showNowLine = isToday && nowMinutes >= dayStart && nowMinutes <= dayEnd
   const nowX = (nowMinutes - dayStart) * PX_PER_MINUTE
 
+  useEffect(() => {
+    if (!autoScrollToNow || !isToday || !showNowLine || didAutoScrollRef.current) return
+
+    const scroller = scrollerRef.current
+    if (!scroller) return
+
+    const target = Math.max(nowX - scroller.clientWidth * 0.35, 0)
+    scroller.scrollLeft = target
+    didAutoScrollRef.current = true
+  }, [autoScrollToNow, isToday, nowX, showNowLine])
+
   return (
     <section className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
       <div className="border-b border-slate-200 bg-slate-100/70 px-4 py-3 md:px-5">
@@ -86,14 +109,14 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem }) {
         <p className="mt-1 text-xs text-slate-500">{formatTimeRange(dayStart, dayEnd)}</p>
       </div>
 
-      <div className="overflow-x-auto">
+      <div ref={scrollerRef} className="overflow-x-auto">
         <div className="min-w-full" style={{ minWidth: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}>
           <div
             className="sticky top-0 z-10 flex border-b border-slate-200 bg-white"
             style={{ width: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
           >
             <div
-              className="shrink-0 border-r border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500"
+              className="sticky left-0 z-20 shrink-0 border-r border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500"
               style={{ width: LEFT_COL_WIDTH }}
             >
               Location
@@ -133,14 +156,19 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem }) {
                 style={{ width: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
               >
                 <div
-                  className="shrink-0 border-r border-slate-200 px-3 py-3"
+                  className="sticky left-0 z-10 shrink-0 border-r border-slate-200 bg-white px-3 py-3"
                   style={{ width: LEFT_COL_WIDTH }}
                 >
-                  <p className="text-xs font-semibold text-slate-900">{location.name}</p>
+                  <p className={`${compactMode ? 'text-[11px]' : 'text-xs'} font-semibold text-slate-900`}>
+                    {location.name}
+                  </p>
                   <p className="mt-1 text-[11px] text-slate-500">{location.items.length} session(s)</p>
                 </div>
 
-                <div className="relative h-20 shrink-0" style={{ width: totalMinutes * PX_PER_MINUTE }}>
+                <div
+                  className={`relative shrink-0 ${compactMode ? 'h-14' : 'h-20'}`}
+                  style={{ width: totalMinutes * PX_PER_MINUTE }}
+                >
                   {ticks.map((t) => {
                     const x = (t - dayStart) * PX_PER_MINUTE
                     const isHour = t % 60 === 0
@@ -166,12 +194,12 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem }) {
                         key={`${item.start_time}-${item.title}-${idx}`}
                         type="button"
                         onClick={() => onSelectItem(item)}
-                        className={`absolute top-2 bottom-2 overflow-hidden rounded-md px-2 py-1 text-left text-[11px] text-white shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-400 ${classes.bar}`}
+                        className={`absolute ${compactMode ? 'top-1 bottom-1' : 'top-2 bottom-2'} overflow-hidden rounded-md px-2 py-1 text-left ${compactMode ? 'text-[10px]' : 'text-[11px]'} text-white shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-400 ${classes.bar}`}
                         style={{ left, width }}
                         title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
                       >
                         <p className="truncate font-medium">{item.title}</p>
-                        {item.subtitle && <p className={`truncate ${classes.sub}`}>{item.subtitle}</p>}
+                        {!compactMode && item.subtitle && <p className={`truncate ${classes.sub}`}>{item.subtitle}</p>}
                       </button>
                     )
                   })}
@@ -192,7 +220,17 @@ export default function App() {
   const [selectedVenues, setSelectedVenues] = useState([])
   const [selectedLocations, setSelectedLocations] = useState([])
   const [selectedItem, setSelectedItem] = useState(null)
+  const [compactMode, setCompactMode] = useState(false)
   const [now, setNow] = useState(new Date())
+
+  const venuesInitRef = useRef(false)
+  const locationsInitRef = useRef(false)
+  const autoScrollRef = useRef(true)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setCompactMode(params.get('compact') === '1')
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -224,10 +262,19 @@ export default function App() {
   }, [data.items])
 
   useEffect(() => {
-    if (allVenues.length && selectedVenues.length === 0) {
-      setSelectedVenues(allVenues)
+    if (!allVenues.length) return
+
+    if (!venuesInitRef.current) {
+      const params = new URLSearchParams(window.location.search)
+      const fromUrl = parseCsvParam(params, 'venues')
+      const valid = fromUrl.filter((v) => allVenues.includes(v))
+      setSelectedVenues(valid.length ? valid : allVenues)
+      venuesInitRef.current = true
+      return
     }
-  }, [allVenues, selectedVenues.length])
+
+    setSelectedVenues((prev) => prev.filter((v) => allVenues.includes(v)))
+  }, [allVenues])
 
   const venueFilteredItems = useMemo(() => {
     const allowed = new Set(selectedVenues)
@@ -245,12 +292,39 @@ export default function App() {
       return
     }
 
+    if (!locationsInitRef.current) {
+      const params = new URLSearchParams(window.location.search)
+      const fromUrl = parseCsvParam(params, 'locations')
+      const valid = fromUrl.filter((v) => allLocations.includes(v))
+      setSelectedLocations(valid.length ? valid : allLocations)
+      locationsInitRef.current = true
+      return
+    }
+
     setSelectedLocations((prev) => {
-      if (prev.length === 0) return allLocations
       const valid = prev.filter((loc) => allLocations.includes(loc))
       return valid.length ? valid : allLocations
     })
   }, [allLocations])
+
+  useEffect(() => {
+    if (!venuesInitRef.current) return
+
+    const params = new URLSearchParams(window.location.search)
+
+    if (selectedVenues.length) params.set('venues', selectedVenues.join(','))
+    else params.delete('venues')
+
+    if (selectedLocations.length) params.set('locations', selectedLocations.join(','))
+    else params.delete('locations')
+
+    if (compactMode) params.set('compact', '1')
+    else params.delete('compact')
+
+    const qs = params.toString()
+    const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}`
+    window.history.replaceState({}, '', nextUrl)
+  }, [selectedVenues, selectedLocations, compactMode])
 
   const filteredItems = useMemo(() => {
     const allowed = new Set(selectedLocations)
@@ -269,8 +343,6 @@ export default function App() {
         location_name: item.location_name || 'Unknown location',
         startMinutes: minutesSinceMidnight(start),
         endMinutes: minutesSinceMidnight(end),
-        startDate: start,
-        endDate: end,
       }
 
       if (!map.has(item.date)) map.set(item.date, [])
@@ -298,6 +370,7 @@ export default function App() {
   }, [filteredItems])
 
   const toggleVenue = (venue) => {
+    autoScrollRef.current = false
     setSelectedVenues((prev) => {
       if (prev.includes(venue)) return prev.filter((v) => v !== venue)
       return [...prev, venue]
@@ -305,10 +378,12 @@ export default function App() {
   }
 
   const selectAllVenues = () => {
+    autoScrollRef.current = false
     setSelectedVenues((prev) => (prev.length === allVenues.length ? [] : allVenues))
   }
 
   const toggleLocation = (location) => {
+    autoScrollRef.current = false
     setSelectedLocations((prev) => {
       if (prev.includes(location)) return prev.filter((l) => l !== location)
       return [...prev, location]
@@ -316,6 +391,7 @@ export default function App() {
   }
 
   const selectAllLocations = () => {
+    autoScrollRef.current = false
     setSelectedLocations((prev) => (prev.length === allLocations.length ? [] : allLocations))
   }
 
@@ -337,8 +413,23 @@ export default function App() {
         </header>
 
         <section className="mb-4 rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200 md:mb-6 md:p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-slate-800">Filters & View</h2>
+            <button
+              type="button"
+              onClick={() => setCompactMode((v) => !v)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                compactMode
+                  ? 'border-slate-800 bg-slate-800 text-white'
+                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+              }`}
+            >
+              Compact mode: {compactMode ? 'On' : 'Off'}
+            </button>
+          </div>
+
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-800">Venue filters</h2>
+            <h3 className="text-sm font-semibold text-slate-800">Venue filters</h3>
             <button
               type="button"
               onClick={selectAllVenues}
@@ -369,7 +460,7 @@ export default function App() {
           </div>
 
           <div className="mt-4 mb-2 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-800">Location filters</h2>
+            <h3 className="text-sm font-semibold text-slate-800">Location filters</h3>
             <button
               type="button"
               onClick={selectAllLocations}
@@ -417,6 +508,8 @@ export default function App() {
               nowMinutes={nowMinutes}
               isToday={day.date === todayIso}
               onSelectItem={setSelectedItem}
+              compactMode={compactMode}
+              autoScrollToNow={autoScrollRef.current}
             />
           ))}
         </div>

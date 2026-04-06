@@ -57,6 +57,11 @@ function getSessionType(title = '') {
   return 'other'
 }
 
+function isBookable(item) {
+  const n = Number(item?.availability)
+  return Number.isFinite(n) && n >= 0
+}
+
 function getSessionClasses(type) {
   if (type === 'closed') return { bar: 'bg-red-600/95', sub: 'text-red-100' }
   if (type === 'lane') return { bar: 'bg-blue-600/90', sub: 'text-blue-100' }
@@ -201,6 +206,7 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
                     const width = Math.max((item.endMinutes - item.startMinutes) * PX_PER_MINUTE, 8)
                     const type = getSessionType(item.title)
                     const classes = getSessionClasses(type)
+                    const bookable = isBookable(item)
 
                     return (
                       <button
@@ -211,6 +217,11 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
                         style={{ left, width }}
                         title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
                       >
+                        {bookable && (
+                          <span className="absolute right-1 top-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/90 text-[10px] text-slate-900" title="Bookable class">
+                            ★
+                          </span>
+                        )}
                         <p className="truncate font-medium">{item.title}</p>
                         {!compactMode && item.subtitle && <p className={`truncate ${classes.sub}`}>{item.subtitle}</p>}
                       </button>
@@ -559,6 +570,12 @@ export default function App() {
                   <dd className="text-slate-700">{selectedItem.subtitle}</dd>
                 </div>
               )}
+              {isBookable(selectedItem) && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-500">Booking</dt>
+                  <dd className="text-slate-900">{selectedItem.availability} spaces remaining</dd>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-slate-500">Venue</dt>
@@ -579,6 +596,18 @@ export default function App() {
                   <dd className="text-slate-900">{toDateTime(selectedItem.end_time).toLocaleString('en-GB')}</dd>
                 </div>
               </div>
+              {selectedItem.sign_up_url && (
+                <div className="pt-1">
+                  <a
+                    href={selectedItem.sign_up_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                  >
+                    Sign up
+                  </a>
+                </div>
+              )}
             </dl>
           </div>
         </div>

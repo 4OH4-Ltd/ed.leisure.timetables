@@ -42,6 +42,32 @@ const FEEDS = [
   },
 ]
 
+function deriveSignupUrl(slot) {
+  if (typeof slot?.roller_checkout === 'string' && /^https?:\/\//.test(slot.roller_checkout)) {
+    return slot.roller_checkout
+  }
+
+  if (slot?.roller_checkout && typeof slot.roller_checkout === 'object') {
+    const candidate = slot.roller_checkout.url || slot.roller_checkout.link || slot.roller_checkout.checkout_url
+    if (typeof candidate === 'string' && /^https?:\/\//.test(candidate)) return candidate
+  }
+
+  if (typeof slot?.slot_reference === 'string' && /^https?:\/\//.test(slot.slot_reference)) {
+    return slot.slot_reference
+  }
+
+  if (slot?.slot_reference && typeof slot.slot_reference === 'object') {
+    const candidate =
+      slot.slot_reference.url ||
+      slot.slot_reference.link ||
+      slot.slot_reference.checkout_url ||
+      slot.slot_reference.booking_url
+    if (typeof candidate === 'string' && /^https?:\/\//.test(candidate)) return candidate
+  }
+
+  return ''
+}
+
 async function fetchFeed(feed) {
   const form = new FormData()
   form.append('action', 'load_category_schedules')
@@ -73,6 +99,8 @@ async function fetchFeed(feed) {
         location_name: slot.location_name || 'Unknown location',
         title: slot.title,
         subtitle: slot.subtitle,
+        availability: slot.availability,
+        sign_up_url: deriveSignupUrl(slot),
       })
     }
   }

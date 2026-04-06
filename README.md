@@ -8,9 +8,18 @@ The app uses Edinburgh Leisure's timetable endpoint:
 
 - `action=load_category_schedules`
 - `category_id=34`
-- `post_id=3272`
+- `post_id=<venue id>`
 
-These IDs currently map to **Royal Commonwealth Pool / Pool timetable**. More feeds can be added later in `scripts/fetch-schedules.mjs`.
+The repo is preconfigured with multiple pool venues:
+
+- Royal Commonwealth Pool (`3272`)
+- Ainslie Park Leisure Centre (`3253`)
+- Drumbrae Leisure Centre (`3259`)
+- Dalry Swim Centre (`3260`)
+- Glenogle Swim Centre (`3263`)
+- Leith Victoria Swim Centre (`3266`)
+
+More feeds can be added in `scripts/fetch-schedules.mjs`.
 
 ## How it works
 

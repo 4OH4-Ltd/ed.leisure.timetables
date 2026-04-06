@@ -10,6 +10,36 @@ const FEEDS = [
     categoryId: '34',
     postId: '3272',
   },
+  {
+    key: 'ainslie-park-pool',
+    name: 'Ainslie Park Leisure Centre — Pool Timetable',
+    categoryId: '34',
+    postId: '3253',
+  },
+  {
+    key: 'drumbrae-pool',
+    name: 'Drumbrae Leisure Centre — Pool Timetable',
+    categoryId: '34',
+    postId: '3259',
+  },
+  {
+    key: 'dalry-pool',
+    name: 'Dalry Swim Centre — Pool Timetable',
+    categoryId: '34',
+    postId: '3260',
+  },
+  {
+    key: 'glenogle-pool',
+    name: 'Glenogle Swim Centre — Pool Timetable',
+    categoryId: '34',
+    postId: '3263',
+  },
+  {
+    key: 'leith-victoria-pool',
+    name: 'Leith Victoria Swim Centre — Pool Timetable',
+    categoryId: '34',
+    postId: '3266',
+  },
 ]
 
 async function fetchFeed(feed) {

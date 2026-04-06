@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.1...v1.1.2) (2026-04-06)
+
+
+### Bug Fixes
+
+* **ui:** improve bookable icon contrast for dark mode ([901022e](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/901022ec10faa40ac1693c7e4b294b01ce73a9af))
+
 ## [1.1.1](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.0...v1.1.1) (2026-04-06)
 
 

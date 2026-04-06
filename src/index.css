@@ -1,3 +1,66 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+  Theme tokens + dark-mode utility mapping.
+  Uses prefers-color-scheme so it follows the user's browser setting automatically.
+*/
+:root {
+  --app-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-surface-soft: #f1f5f9;
+  --app-border: #e2e8f0;
+  --app-text: #0f172a;
+  --app-text-strong: #1e293b;
+  --app-text-muted: #64748b;
+  --app-info-bg: #eff6ff;
+  --app-info-border: #bfdbfe;
+  --app-info-text: #1e40af;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-bg: #020617;
+    --app-surface: #0b1220;
+    --app-surface-soft: #111827;
+    --app-border: #243244;
+    --app-text: #e5e7eb;
+    --app-text-strong: #f3f4f6;
+    --app-text-muted: #94a3b8;
+    --app-info-bg: #0b2545;
+    --app-info-border: #1d4f91;
+    --app-info-text: #bfdbfe;
+  }
+
+  /* Core surfaces */
+  .bg-slate-50 { background-color: var(--app-bg) !important; }
+  .bg-white { background-color: var(--app-surface) !important; }
+  .bg-slate-100\/70,
+  .bg-slate-100\/60,
+  .bg-slate-50 { background-color: var(--app-surface-soft) !important; }
+
+  /* Borders / rings */
+  .border-slate-100,
+  .border-slate-200,
+  .border-slate-300,
+  .ring-slate-200 { border-color: var(--app-border) !important; }
+  .ring-slate-200 { --tw-ring-color: var(--app-border) !important; }
+
+  /* Text */
+  .text-slate-900 { color: var(--app-text-strong) !important; }
+  .text-slate-800,
+  .text-slate-700,
+  .text-slate-600,
+  .text-slate-500 { color: var(--app-text-muted) !important; }
+
+  /* Info box */
+  .bg-blue-50 { background-color: var(--app-info-bg) !important; }
+  .ring-blue-200 { --tw-ring-color: var(--app-info-border) !important; }
+  .text-blue-800 { color: var(--app-info-text) !important; }
+}

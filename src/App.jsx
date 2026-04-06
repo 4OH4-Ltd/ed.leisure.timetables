@@ -170,6 +170,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedVenues, setSelectedVenues] = useState([])
+  const [selectedLocations, setSelectedLocations] = useState([])
 
   useEffect(() => {
     let cancelled = false
@@ -201,10 +202,33 @@ export default function App() {
     }
   }, [allVenues, selectedVenues.length])
 
-  const filteredItems = useMemo(() => {
+  const venueFilteredItems = useMemo(() => {
     const allowed = new Set(selectedVenues)
     return (data.items ?? []).filter((item) => allowed.has(item.venue_name || 'Unknown venue'))
   }, [data.items, selectedVenues])
+
+  const allLocations = useMemo(() => {
+    const set = new Set((venueFilteredItems ?? []).map((i) => i.location_name || 'Unknown location'))
+    return [...set].sort((a, b) => a.localeCompare(b))
+  }, [venueFilteredItems])
+
+  useEffect(() => {
+    if (!allLocations.length) {
+      setSelectedLocations([])
+      return
+    }
+
+    setSelectedLocations((prev) => {
+      if (prev.length === 0) return allLocations
+      const valid = prev.filter((loc) => allLocations.includes(loc))
+      return valid.length ? valid : allLocations
+    })
+  }, [allLocations])
+
+  const filteredItems = useMemo(() => {
+    const allowed = new Set(selectedLocations)
+    return venueFilteredItems.filter((item) => allowed.has(item.location_name || 'Unknown location'))
+  }, [venueFilteredItems, selectedLocations])
 
   const grouped = useMemo(() => {
     const map = new Map()
@@ -253,6 +277,15 @@ export default function App() {
 
   const selectAllVenues = () => setSelectedVenues(allVenues)
 
+  const toggleLocation = (location) => {
+    setSelectedLocations((prev) => {
+      if (prev.includes(location)) return prev.filter((l) => l !== location)
+      return [...prev, location]
+    })
+  }
+
+  const selectAllLocations = () => setSelectedLocations(allLocations)
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto w-full max-w-7xl px-3 py-5 md:px-6 md:py-8">
@@ -298,6 +331,37 @@ export default function App() {
               )
             })}
           </div>
+
+          <div className="mt-4 mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-slate-800">Location filters</h2>
+            <button
+              type="button"
+              onClick={selectAllLocations}
+              className="text-xs font-medium text-blue-700 hover:text-blue-800"
+            >
+              Select all
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {allLocations.map((location) => {
+              const active = selectedLocations.includes(location)
+              return (
+                <button
+                  key={location}
+                  type="button"
+                  onClick={() => toggleLocation(location)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                    active
+                      ? 'border-emerald-600 bg-emerald-600 text-white'
+                      : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                  }`}
+                >
+                  {location}
+                </button>
+              )
+            })}
+          </div>
         </section>
 
         {loading && <p className="text-sm text-slate-600">Loading timetable…</p>}
@@ -305,7 +369,7 @@ export default function App() {
 
         {!loading && !error && grouped.length === 0 && (
           <p className="rounded-lg bg-white p-4 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200">
-            No activities found for selected venues.
+            No activities found for selected venue/location filters.
           </p>
         )}
 

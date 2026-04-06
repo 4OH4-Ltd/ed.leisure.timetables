@@ -219,7 +219,10 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
                         title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
                       >
                         {bookable && (
-                          <span className="absolute right-1 top-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/90 text-[10px] text-slate-900" title="Bookable class">
+                          <span
+                            className="absolute right-1 top-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-amber-500 bg-amber-300/95 text-[10px] text-slate-900 shadow-sm"
+                            title="Bookable class"
+                          >
                             ★
                           </span>
                         )}

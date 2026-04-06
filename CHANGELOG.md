@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.0...v1.1.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* **ui:** remove timetable subheading from header ([ba0c785](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/ba0c78509fb66a26bcbe53fb2ca7f1f3dc5e7bb1))
+
 # [1.1.0](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.0.1...v1.1.0) (2026-04-06)
 
 

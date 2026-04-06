@@ -88,6 +88,20 @@ function parseCsvParam(params, key) {
     .filter(Boolean)
 }
 
+function stackItemsIntoLanes(items) {
+  const laneEndMinutes = []
+
+  return items.map((item) => {
+    let lane = 0
+    while (lane < laneEndMinutes.length && item.startMinutes < laneEndMinutes[lane]) lane += 1
+
+    if (lane === laneEndMinutes.length) laneEndMinutes.push(item.endMinutes)
+    else laneEndMinutes[lane] = item.endMinutes
+
+    return { ...item, lane }
+  })
+}
+
 function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScrollToNow }) {
   const scrollerRef = useRef(null)
   const didAutoScrollRef = useRef(false)
@@ -166,73 +180,78 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
           <ul className="divide-y divide-slate-100">
             {day.locations.map((location) => {
               const { primary, secondary } = splitLocationName(location.name)
+              const stackedItems = stackItemsIntoLanes(location.items)
+              const laneCount = Math.max(...stackedItems.map((i) => i.lane + 1), 1)
+              const laneHeight = compactMode ? 20 : 26
+              const laneGap = 3
+              const topPad = compactMode ? 4 : 6
+              const bottomPad = compactMode ? 4 : 6
+              const rowHeight = topPad + bottomPad + laneCount * laneHeight + (laneCount - 1) * laneGap
 
               return (
-              <li
-                key={location.name}
-                className="flex"
-                style={{ width: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
-              >
-                <div
-                  className="sticky left-0 z-10 shrink-0 border-r border-slate-200 bg-white px-3 py-3"
-                  style={{ width: LEFT_COL_WIDTH }}
+                <li
+                  key={location.name}
+                  className="flex"
+                  style={{ width: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
                 >
-                  <p className={`${compactMode ? 'text-[11px]' : 'text-xs'} font-semibold text-slate-900`}>
-                    {primary}
-                  </p>
-                  {secondary && <p className="mt-0.5 text-[10px] leading-tight text-slate-500">{secondary}</p>}
-                  <p className="mt-1 hidden text-[11px] text-slate-500 sm:block">{location.items.length} session(s)</p>
-                </div>
+                  <div
+                    className="sticky left-0 z-10 shrink-0 border-r border-slate-200 bg-white px-3 py-3"
+                    style={{ width: LEFT_COL_WIDTH }}
+                  >
+                    <p className={`${compactMode ? 'text-[11px]' : 'text-xs'} font-semibold text-slate-900`}>
+                      {primary}
+                    </p>
+                    {secondary && <p className="mt-0.5 text-[10px] leading-tight text-slate-500">{secondary}</p>}
+                    <p className="mt-1 hidden text-[11px] text-slate-500 sm:block">{location.items.length} session(s)</p>
+                  </div>
 
-                <div
-                  className={`relative shrink-0 ${compactMode ? 'h-14' : 'h-20'}`}
-                  style={{ width: totalMinutes * PX_PER_MINUTE }}
-                >
-                  {ticks.map((t) => {
-                    const x = (t - dayStart) * PX_PER_MINUTE
-                    const isHour = t % 60 === 0
-                    return (
-                      <div
-                        key={t}
-                        className={`absolute top-0 h-full border-l ${isHour ? 'border-slate-200' : 'border-slate-100'}`}
-                        style={{ left: x }}
-                      />
-                    )
-                  })}
+                  <div className="relative shrink-0" style={{ width: totalMinutes * PX_PER_MINUTE, height: rowHeight }}>
+                    {ticks.map((t) => {
+                      const x = (t - dayStart) * PX_PER_MINUTE
+                      const isHour = t % 60 === 0
+                      return (
+                        <div
+                          key={t}
+                          className={`absolute top-0 h-full border-l ${isHour ? 'border-slate-200' : 'border-slate-100'}`}
+                          style={{ left: x }}
+                        />
+                      )
+                    })}
 
-                  {showNowLine && <div className="absolute top-0 bottom-0 w-0.5 bg-orange-500" style={{ left: nowX }} />}
+                    {showNowLine && <div className="absolute top-0 bottom-0 w-0.5 bg-orange-500" style={{ left: nowX }} />}
 
-                  {location.items.map((item, idx) => {
-                    const left = (item.startMinutes - dayStart) * PX_PER_MINUTE
-                    const width = Math.max((item.endMinutes - item.startMinutes) * PX_PER_MINUTE, 8)
-                    const type = getSessionType(item.title)
-                    const classes = getSessionClasses(type)
-                    const bookable = isBookable(item)
+                    {stackedItems.map((item, idx) => {
+                      const left = (item.startMinutes - dayStart) * PX_PER_MINUTE
+                      const width = Math.max((item.endMinutes - item.startMinutes) * PX_PER_MINUTE, 8)
+                      const type = getSessionType(item.title)
+                      const classes = getSessionClasses(type)
+                      const bookable = isBookable(item)
+                      const y = topPad + item.lane * (laneHeight + laneGap)
 
-                    return (
-                      <button
-                        key={`${item.start_time}-${item.title}-${idx}`}
-                        type="button"
-                        onClick={() => onSelectItem(item)}
-                        className={`absolute ${compactMode ? 'top-1 bottom-1' : 'top-2 bottom-2'} overflow-hidden rounded-md px-2 py-1 text-left ${compactMode ? 'text-[10px]' : 'text-[11px]'} text-white shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-400 ${classes.bar}`}
-                        style={{ left, width }}
-                        title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
-                      >
-                        {bookable && (
-                          <span
-                            className="absolute right-1 top-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-amber-500 bg-amber-300/95 text-[10px] text-slate-900 shadow-sm"
-                            title="Bookable class"
-                          >
-                            ★
-                          </span>
-                        )}
-                        <p className="truncate font-medium">{item.title}</p>
-                        {!compactMode && item.subtitle && <p className={`truncate ${classes.sub}`}>{item.subtitle}</p>}
-                      </button>
-                    )
-                  })}
-                </div>
-              </li>
+                      return (
+                        <button
+                          key={`${item.start_time}-${item.title}-${idx}`}
+                          type="button"
+                          onClick={() => onSelectItem(item)}
+                          className={`absolute overflow-hidden rounded-md px-2 py-1 text-left ${compactMode ? 'text-[10px]' : 'text-[11px]'} text-white shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-400 ${classes.bar}`}
+                          style={{ left, width, top: y, height: laneHeight }}
+                          title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
+                        >
+                          {bookable && (
+                            <span
+                              className="absolute right-1 top-1 inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-amber-500 bg-amber-300/95 text-[9px] leading-none text-slate-900 shadow-sm"
+                              title="Bookable class"
+                            >
+                              ★
+                            </span>
+                          )}
+                          <p className="truncate font-medium">{item.title}</p>
+                          {!compactMode && item.subtitle && <p className={`truncate ${classes.sub}`}>{item.subtitle}</p>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </li>
               )
             })}
           </ul>

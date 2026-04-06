@@ -295,7 +295,7 @@ export default function App() {
       const valid = fromUrl.filter((v) => allVenues.includes(v))
 
       if (valid.length) {
-        setSelectedVenues(valid)
+        setSelectedVenues([valid[0]])
       } else {
         const defaultVenue = 'Royal Commonwealth Pool'
         setSelectedVenues(allVenues.includes(defaultVenue) ? [defaultVenue] : [])
@@ -309,7 +309,7 @@ export default function App() {
   }, [allVenues])
 
   const venueFilteredItems = useMemo(() => {
-    if (!selectedVenues.length) return data.items ?? []
+    if (!selectedVenues.length) return []
     const allowed = new Set(selectedVenues)
     return (data.items ?? []).filter((item) => allowed.has(item.venue_name || 'Unknown venue'))
   }, [data.items, selectedVenues])
@@ -408,9 +408,9 @@ export default function App() {
     })
   }
 
-  const selectAllVenues = () => {
+  const clearVenueSelection = () => {
     autoScrollRef.current = false
-    setSelectedVenues((prev) => (prev.length === allVenues.length ? [] : allVenues))
+    setSelectedVenues([])
   }
 
   const toggleLocation = (location) => {
@@ -468,10 +468,10 @@ export default function App() {
             <h3 className="text-sm font-semibold text-slate-800">Venue filters</h3>
             <button
               type="button"
-              onClick={selectAllVenues}
+              onClick={clearVenueSelection}
               className="text-xs font-medium text-blue-700 hover:text-blue-800"
             >
-              Select all
+              Clear
             </button>
           </div>
 
@@ -530,7 +530,13 @@ export default function App() {
         {loading && <p className="text-sm text-slate-600">Loading timetable…</p>}
         {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
-        {!loading && !error && grouped.length === 0 && (
+        {!loading && !error && selectedVenues.length === 0 && (
+          <p className="rounded-lg bg-blue-50 p-4 text-sm text-blue-800 shadow-sm ring-1 ring-blue-200">
+            Select a venue to view its timetable.
+          </p>
+        )}
+
+        {!loading && !error && selectedVenues.length > 0 && grouped.length === 0 && (
           <p className="rounded-lg bg-white p-4 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200">
             No activities found for selected venue/location filters.
           </p>

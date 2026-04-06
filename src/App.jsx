@@ -440,9 +440,7 @@ export default function App() {
               About
             </a>
           </div>
-          <p className="mt-2 text-sm text-slate-600 md:text-base">
-            Royal Commonwealth Pool timetable in a day-by-day grid view.
-          </p>
+          <></>
           <p className="mt-1 text-xs text-slate-500">
             Version: v{APP_VERSION} • Source: {data.source}
             {data.updatedAt ? ` • Updated ${new Date(data.updatedAt).toLocaleString('en-GB')}` : ''}

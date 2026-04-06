@@ -275,7 +275,9 @@ export default function App() {
     })
   }
 
-  const selectAllVenues = () => setSelectedVenues(allVenues)
+  const selectAllVenues = () => {
+    setSelectedVenues((prev) => (prev.length === allVenues.length ? [] : allVenues))
+  }
 
   const toggleLocation = (location) => {
     setSelectedLocations((prev) => {
@@ -284,7 +286,9 @@ export default function App() {
     })
   }
 
-  const selectAllLocations = () => setSelectedLocations(allLocations)
+  const selectAllLocations = () => {
+    setSelectedLocations((prev) => (prev.length === allLocations.length ? [] : allLocations))
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">

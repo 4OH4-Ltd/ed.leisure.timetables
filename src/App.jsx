@@ -67,10 +67,7 @@ function DayGrid({ day }) {
       </div>
 
       <div className="overflow-x-auto">
-        <div
-          className="min-w-full"
-          style={{ minWidth: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
-        >
+        <div className="min-w-full" style={{ minWidth: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}>
           <div
             className="sticky top-0 z-10 flex border-b border-slate-200 bg-white"
             style={{ width: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
@@ -79,7 +76,7 @@ function DayGrid({ day }) {
               className="shrink-0 border-r border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500"
               style={{ width: LEFT_COL_WIDTH }}
             >
-              Session
+              Location
             </div>
 
             <div className="relative shrink-0" style={{ width: totalMinutes * PX_PER_MINUTE }}>
@@ -108,51 +105,59 @@ function DayGrid({ day }) {
           </div>
 
           <ul className="divide-y divide-slate-100">
-            {day.items.map((item, idx) => {
-              const left = (item.startMinutes - dayStart) * PX_PER_MINUTE
-              const width = Math.max((item.endMinutes - item.startMinutes) * PX_PER_MINUTE, 6)
-
-              return (
-                <li
-                  key={`${item.start_time}-${item.title}-${idx}`}
-                  className="flex"
-                  style={{ width: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
+            {day.locations.map((location) => (
+              <li
+                key={location.name}
+                className="flex"
+                style={{ width: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
+              >
+                <div
+                  className="shrink-0 border-r border-slate-200 px-3 py-3"
+                  style={{ width: LEFT_COL_WIDTH }}
                 >
-                  <div
-                    className="shrink-0 border-r border-slate-200 px-3 py-3"
-                    style={{ width: LEFT_COL_WIDTH }}
-                  >
-                    <p className="text-xs font-medium text-slate-900">{item.title}</p>
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      {formatTimeRange(item.startMinutes, item.endMinutes)}
-                    </p>
-                  </div>
+                  <p className="text-xs font-semibold text-slate-900">{location.name}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">{location.items.length} session(s)</p>
+                </div>
 
-                  <div className="relative h-16 shrink-0" style={{ width: totalMinutes * PX_PER_MINUTE }}>
-                    {ticks.map((t) => {
-                      const x = (t - dayStart) * PX_PER_MINUTE
-                      const isHour = t % 60 === 0
-                      return (
-                        <div
-                          key={t}
-                          className={`absolute top-0 h-full border-l ${isHour ? 'border-slate-200' : 'border-slate-100'}`}
-                          style={{ left: x }}
-                        />
-                      )
-                    })}
+                <div className="relative h-20 shrink-0" style={{ width: totalMinutes * PX_PER_MINUTE }}>
+                  {ticks.map((t) => {
+                    const x = (t - dayStart) * PX_PER_MINUTE
+                    const isHour = t % 60 === 0
+                    return (
+                      <div
+                        key={t}
+                        className={`absolute top-0 h-full border-l ${isHour ? 'border-slate-200' : 'border-slate-100'}`}
+                        style={{ left: x }}
+                      />
+                    )
+                  })}
 
-                    <div
-                      className="absolute top-2 bottom-2 overflow-hidden rounded-md bg-blue-600/90 px-2 py-1 text-[11px] text-white shadow-sm"
-                      style={{ left, width }}
-                      title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
-                    >
-                      <p className="truncate font-medium">{item.title}</p>
-                      {item.subtitle && <p className="truncate text-blue-100">{item.subtitle}</p>}
-                    </div>
-                  </div>
-                </li>
-              )
-            })}
+                  {location.items.map((item, idx) => {
+                    const left = (item.startMinutes - dayStart) * PX_PER_MINUTE
+                    const width = Math.max((item.endMinutes - item.startMinutes) * PX_PER_MINUTE, 8)
+                    const isClosed = item.title.toLowerCase().includes('pool closed')
+
+                    return (
+                      <div
+                        key={`${item.start_time}-${item.title}-${idx}`}
+                        className={`absolute top-2 bottom-2 overflow-hidden rounded-md px-2 py-1 text-[11px] text-white shadow-sm ${
+                          isClosed ? 'bg-red-600/95' : 'bg-blue-600/90'
+                        }`}
+                        style={{ left, width }}
+                        title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
+                      >
+                        <p className="truncate font-medium">{item.title}</p>
+                        {item.subtitle && (
+                          <p className={`truncate ${isClosed ? 'text-red-100' : 'text-blue-100'}`}>
+                            {item.subtitle}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
@@ -192,6 +197,7 @@ export default function App() {
       const end = toDateTime(item.end_time)
       const withMinutes = {
         ...item,
+        location_name: item.location_name || 'Unknown location',
         startMinutes: minutesSinceMidnight(start),
         endMinutes: minutesSinceMidnight(end),
       }
@@ -202,10 +208,22 @@ export default function App() {
 
     return [...map.entries()]
       .sort(([a], [b]) => new Date(a) - new Date(b))
-      .map(([date, items]) => ({
-        date,
-        items: items.sort((x, y) => x.startMinutes - y.startMinutes),
-      }))
+      .map(([date, items]) => {
+        const byLocation = new Map()
+        for (const item of items) {
+          if (!byLocation.has(item.location_name)) byLocation.set(item.location_name, [])
+          byLocation.get(item.location_name).push(item)
+        }
+
+        const locations = [...byLocation.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([name, locItems]) => ({
+            name,
+            items: locItems.sort((x, y) => x.startMinutes - y.startMinutes),
+          }))
+
+        return { date, items, locations }
+      })
   }, [data.items])
 
   return (

@@ -39,6 +39,7 @@ async function fetchFeed(feed) {
         date: day.date,
         start_time: slot.start_time,
         end_time: slot.end_time,
+        location_name: slot.location_name || 'Unknown location',
         title: slot.title,
         subtitle: slot.subtitle,
       })

@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.3...v1.1.4) (2026-04-06)
+
+
+### Bug Fixes
+
+* **ui:** keep event block height consistent while expanding overlap rows ([7062a17](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/7062a1710329126fd6ebb0fc9b6d0b6f6f8b16a8))
+
 ## [1.1.3](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.2...v1.1.3) (2026-04-06)
 
 

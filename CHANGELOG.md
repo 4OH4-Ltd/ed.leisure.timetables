@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.4...v1.1.5) (2026-04-06)
+
+
+### Reverts
+
+* Revert "chore(release): 1.1.4" ([19c403f](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/19c403f837eae5dab904b93a4b18f581cafc8c40))
+
 ## [1.1.3](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.2...v1.1.3) (2026-04-06)
 
 

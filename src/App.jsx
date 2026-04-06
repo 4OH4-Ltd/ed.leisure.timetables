@@ -1,19 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 
-const API_URL = 'https://www.edinburghleisure.co.uk/wp-admin/admin-ajax.php'
 const STEP_MINUTES = 15
 const PX_PER_MINUTE = 2
-const TIME_COL_WIDTH = STEP_MINUTES * PX_PER_MINUTE
 const LEFT_COL_WIDTH = 180
-
-const FEEDS = [
-  {
-    key: 'rcp-pool',
-    name: 'Royal Commonwealth Pool — Pool Timetable',
-    categoryId: '34',
-    postId: '3272',
-  },
-]
 
 function toDateTime(value) {
   return new Date(value.replace(' ', 'T'))
@@ -51,46 +40,11 @@ function formatTimeRange(start, end) {
 }
 
 async function loadData() {
-  const fallback = async () => {
-    const res = await fetch('./data/schedules.json', { cache: 'no-store' })
-    if (!res.ok) throw new Error('Could not load fallback timetable data')
-    return res.json()
-  }
+  const res = await fetch('./data/schedules.json', { cache: 'no-store' })
+  if (!res.ok) throw new Error('Could not load timetable data')
 
-  try {
-    const all = []
-
-    for (const feed of FEEDS) {
-      const body = new FormData()
-      body.append('action', 'load_category_schedules')
-      body.append('category_id', feed.categoryId)
-      body.append('post_id', feed.postId)
-
-      const res = await fetch(API_URL, { method: 'POST', body })
-      if (!res.ok) throw new Error(`API error: ${res.status}`)
-
-      const json = await res.json()
-      const table = json?.data?.table ?? []
-
-      for (const day of table) {
-        for (const slot of day.slots ?? []) {
-          all.push({
-            feed: feed.name,
-            date: day.date,
-            start_time: slot.start_time,
-            end_time: slot.end_time,
-            title: slot.title,
-            subtitle: slot.subtitle,
-          })
-        }
-      }
-    }
-
-    return { updatedAt: new Date().toISOString(), items: all, source: 'live-api' }
-  } catch {
-    const data = await fallback()
-    return { ...data, source: data?.source || 'fallback' }
-  }
+  const data = await res.json()
+  return { ...data, source: data?.source || 'github-actions-fetch' }
 }
 
 function DayGrid({ day }) {

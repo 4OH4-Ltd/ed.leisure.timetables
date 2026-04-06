@@ -14,11 +14,11 @@ These IDs currently map to **Royal Commonwealth Pool / Pool timetable**. More fe
 
 ## How it works
 
-Because browser CORS can block direct calls from GitHub Pages, the deploy workflow fetches live timetable data during build and writes it to:
+Because browser CORS blocks direct client-side calls from GitHub Pages, the deploy workflow fetches live timetable data during build and writes it to:
 
 - `public/data/schedules.json`
 
-The frontend tries the live API first and falls back to `./data/schedules.json`.
+The frontend reads `./data/schedules.json` only.
 
 ## Local dev
 

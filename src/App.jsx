@@ -64,7 +64,7 @@ async function loadData() {
   return { ...data, source: data?.source || 'github-actions-fetch' }
 }
 
-function DayGrid({ day, nowMinutes, isToday }) {
+function DayGrid({ day, nowMinutes, isToday, onSelectItem }) {
   const minStart = Math.min(...day.items.map((i) => i.startMinutes))
   const maxEnd = Math.max(...day.items.map((i) => i.endMinutes))
   const dayStart = roundDownToStep(minStart)
@@ -162,15 +162,17 @@ function DayGrid({ day, nowMinutes, isToday }) {
                     const classes = getSessionClasses(type)
 
                     return (
-                      <div
+                      <button
                         key={`${item.start_time}-${item.title}-${idx}`}
-                        className={`absolute top-2 bottom-2 overflow-hidden rounded-md px-2 py-1 text-[11px] text-white shadow-sm ${classes.bar}`}
+                        type="button"
+                        onClick={() => onSelectItem(item)}
+                        className={`absolute top-2 bottom-2 overflow-hidden rounded-md px-2 py-1 text-left text-[11px] text-white shadow-sm transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-400 ${classes.bar}`}
                         style={{ left, width }}
                         title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
                       >
                         <p className="truncate font-medium">{item.title}</p>
                         {item.subtitle && <p className={`truncate ${classes.sub}`}>{item.subtitle}</p>}
-                      </div>
+                      </button>
                     )
                   })}
                 </div>
@@ -189,6 +191,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [selectedVenues, setSelectedVenues] = useState([])
   const [selectedLocations, setSelectedLocations] = useState([])
+  const [selectedItem, setSelectedItem] = useState(null)
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -472,10 +475,72 @@ export default function App() {
 
         <div className="space-y-4 md:space-y-6">
           {grouped.map((day) => (
-            <DayGrid key={day.date} day={day} nowMinutes={nowMinutes} isToday={day.date === todayIso} />
+            <DayGrid
+              key={day.date}
+              day={day}
+              nowMinutes={nowMinutes}
+              isToday={day.date === todayIso}
+              onSelectItem={setSelectedItem}
+            />
           ))}
         </div>
       </div>
+
+      {selectedItem && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-3 md:items-center"
+          onClick={() => setSelectedItem(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-xl bg-white p-4 shadow-xl ring-1 ring-slate-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <h3 className="text-base font-semibold text-slate-900">Session details</h3>
+              <button
+                type="button"
+                onClick={() => setSelectedItem(null)}
+                className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
+
+            <dl className="space-y-2 text-sm">
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-slate-500">Title</dt>
+                <dd className="text-slate-900">{selectedItem.title}</dd>
+              </div>
+              {selectedItem.subtitle && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-500">Subtitle</dt>
+                  <dd className="text-slate-700">{selectedItem.subtitle}</dd>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-500">Venue</dt>
+                  <dd className="text-slate-900">{selectedItem.venue_name || 'Unknown venue'}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-500">Location</dt>
+                  <dd className="text-slate-900">{selectedItem.location_name || 'Unknown location'}</dd>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-500">Start</dt>
+                  <dd className="text-slate-900">{toDateTime(selectedItem.start_time).toLocaleString('en-GB')}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-500">End</dt>
+                  <dd className="text-slate-900">{toDateTime(selectedItem.end_time).toLocaleString('en-GB')}</dd>
+                </div>
+              </div>
+            </dl>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

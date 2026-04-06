@@ -293,7 +293,14 @@ export default function App() {
       const params = new URLSearchParams(window.location.search)
       const fromUrl = parseCsvParam(params, 'venues')
       const valid = fromUrl.filter((v) => allVenues.includes(v))
-      setSelectedVenues(valid)
+
+      if (valid.length) {
+        setSelectedVenues(valid)
+      } else {
+        const defaultVenue = 'Royal Commonwealth Pool'
+        setSelectedVenues(allVenues.includes(defaultVenue) ? [defaultVenue] : [])
+      }
+
       venuesInitRef.current = true
       return
     }

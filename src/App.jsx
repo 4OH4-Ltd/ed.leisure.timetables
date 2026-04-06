@@ -182,10 +182,10 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
               const { primary, secondary } = splitLocationName(location.name)
               const stackedItems = stackItemsIntoLanes(location.items)
               const laneCount = Math.max(...stackedItems.map((i) => i.lane + 1), 1)
-              const laneHeight = compactMode ? 20 : 26
-              const laneGap = 3
-              const topPad = compactMode ? 4 : 6
-              const bottomPad = compactMode ? 4 : 6
+              const laneHeight = compactMode ? 54 : 64
+              const laneGap = 4
+              const topPad = compactMode ? 1 : 2
+              const bottomPad = compactMode ? 1 : 2
               const rowHeight = topPad + bottomPad + laneCount * laneHeight + (laneCount - 1) * laneGap
 
               return (

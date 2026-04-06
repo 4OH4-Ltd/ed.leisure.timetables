@@ -1,4 +1,4 @@
-# RCP Timetable
+# Edinburgh Leisure Timetables
 
 Clean timetable viewer built with Vite + React + Tailwind CSS.
 

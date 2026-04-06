@@ -297,21 +297,6 @@ export default function App() {
       })
   }, [filteredItems])
 
-  const nowNext = useMemo(() => {
-    const current = filteredItems
-      .map((i) => ({ ...i, start: toDateTime(i.start_time), end: toDateTime(i.end_time) }))
-      .filter((i) => i.start <= now && i.end >= now)
-      .sort((a, b) => a.end - b.end)
-
-    const upcoming = filteredItems
-      .map((i) => ({ ...i, start: toDateTime(i.start_time), end: toDateTime(i.end_time) }))
-      .filter((i) => i.start > now)
-      .sort((a, b) => a.start - b.start)
-      .slice(0, 2)
-
-    return { current, upcoming }
-  }, [filteredItems, now])
-
   const toggleVenue = (venue) => {
     setSelectedVenues((prev) => {
       if (prev.includes(venue)) return prev.filter((v) => v !== venue)
@@ -350,55 +335,6 @@ export default function App() {
             {data.updatedAt ? ` • Updated ${new Date(data.updatedAt).toLocaleString('en-GB')}` : ''}
           </p>
         </header>
-
-        <section className="mb-4 rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200 md:mb-6 md:p-4">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-800">Now / Next</h2>
-          </div>
-
-          <div className="grid gap-2 md:grid-cols-2">
-            <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-200">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Now</p>
-              {nowNext.current.length ? (
-                nowNext.current.slice(0, 2).map((item, idx) => (
-                  <p key={`${item.start_time}-${idx}`} className="mt-1 text-sm text-slate-800">
-                    {item.title} <span className="text-slate-500">({item.location_name})</span>
-                  </p>
-                ))
-              ) : (
-                <p className="mt-1 text-sm text-slate-500">No live sessions right now.</p>
-              )}
-            </div>
-            <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-200">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Next</p>
-              {nowNext.upcoming.length ? (
-                nowNext.upcoming.map((item, idx) => (
-                  <p key={`${item.start_time}-${idx}`} className="mt-1 text-sm text-slate-800">
-                    {item.title}{' '}
-                    <span className="text-slate-500">({item.location_name}, {item.start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })})</span>
-                  </p>
-                ))
-              ) : (
-                <p className="mt-1 text-sm text-slate-500">No upcoming sessions in range.</p>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-            {[
-              ['Lane Swim', 'bg-blue-600'],
-              ['Family Fun', 'bg-emerald-600'],
-              ['Lessons', 'bg-violet-600'],
-              ['Pool Closed', 'bg-red-600'],
-              ['Other', 'bg-slate-700'],
-            ].map(([label, color]) => (
-              <span key={label} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-slate-700">
-                <span className={`h-2 w-2 rounded-full ${color}`} />
-                {label}
-              </span>
-            ))}
-          </div>
-        </section>
 
         <section className="mb-4 rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200 md:mb-6 md:p-4">
           <div className="mb-2 flex items-center justify-between gap-2">

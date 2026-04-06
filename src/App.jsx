@@ -39,6 +39,23 @@ function formatTimeRange(start, end) {
   return `${formatTimeLabel(start)}–${formatTimeLabel(end)}`
 }
 
+function getSessionType(title = '') {
+  const t = title.toLowerCase()
+  if (t.includes('pool closed')) return 'closed'
+  if (t.includes('lane swimming')) return 'lane'
+  if (t.includes('family fun')) return 'family'
+  if (t.includes('lesson') || t.includes('learn to swim')) return 'lesson'
+  return 'other'
+}
+
+function getSessionClasses(type) {
+  if (type === 'closed') return { bar: 'bg-red-600/95', sub: 'text-red-100' }
+  if (type === 'lane') return { bar: 'bg-blue-600/90', sub: 'text-blue-100' }
+  if (type === 'family') return { bar: 'bg-emerald-600/90', sub: 'text-emerald-100' }
+  if (type === 'lesson') return { bar: 'bg-violet-600/90', sub: 'text-violet-100' }
+  return { bar: 'bg-slate-700/90', sub: 'text-slate-200' }
+}
+
 async function loadData() {
   const res = await fetch('./data/schedules.json', { cache: 'no-store' })
   if (!res.ok) throw new Error('Could not load timetable data')
@@ -47,7 +64,7 @@ async function loadData() {
   return { ...data, source: data?.source || 'github-actions-fetch' }
 }
 
-function DayGrid({ day }) {
+function DayGrid({ day, nowMinutes, isToday }) {
   const minStart = Math.min(...day.items.map((i) => i.startMinutes))
   const maxEnd = Math.max(...day.items.map((i) => i.endMinutes))
   const dayStart = roundDownToStep(minStart)
@@ -56,6 +73,9 @@ function DayGrid({ day }) {
 
   const ticks = []
   for (let t = dayStart; t <= dayEnd; t += STEP_MINUTES) ticks.push(t)
+
+  const showNowLine = isToday && nowMinutes >= dayStart && nowMinutes <= dayEnd
+  const nowX = (nowMinutes - dayStart) * PX_PER_MINUTE
 
   return (
     <section className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -100,6 +120,7 @@ function DayGrid({ day }) {
                   </div>
                 )
               })}
+              {showNowLine && <div className="absolute top-0 bottom-0 w-0.5 bg-orange-500" style={{ left: nowX }} />}
               <div className="h-10" />
             </div>
           </div>
@@ -132,29 +153,26 @@ function DayGrid({ day }) {
                     )
                   })}
 
+                  {showNowLine && <div className="absolute top-0 bottom-0 w-0.5 bg-orange-500" style={{ left: nowX }} />}
+
                   {location.items.map((item, idx) => {
                     const left = (item.startMinutes - dayStart) * PX_PER_MINUTE
                     const width = Math.max((item.endMinutes - item.startMinutes) * PX_PER_MINUTE, 8)
-                    const isClosed = item.title.toLowerCase().includes('pool closed')
+                    const type = getSessionType(item.title)
+                    const classes = getSessionClasses(type)
 
                     return (
                       <div
                         key={`${item.start_time}-${item.title}-${idx}`}
-                        className={`absolute top-2 bottom-2 overflow-hidden rounded-md px-2 py-1 text-[11px] text-white shadow-sm ${
-                          isClosed ? 'bg-red-600/95' : 'bg-blue-600/90'
-                        }`}
+                        className={`absolute top-2 bottom-2 overflow-hidden rounded-md px-2 py-1 text-[11px] text-white shadow-sm ${classes.bar}`}
                         style={{ left, width }}
                         title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
                       >
                         <p className="truncate font-medium">{item.title}</p>
-                        {item.subtitle && (
-                          <p className={`truncate ${isClosed ? 'text-red-100' : 'text-blue-100'}`}>
-                            {item.subtitle}
-                          </p>
-                        )}
+                        {item.subtitle && <p className={`truncate ${classes.sub}`}>{item.subtitle}</p>}
                       </div>
-                    )}
-                  )}
+                    )
+                  })}
                 </div>
               </li>
             ))}
@@ -171,6 +189,7 @@ export default function App() {
   const [error, setError] = useState('')
   const [selectedVenues, setSelectedVenues] = useState([])
   const [selectedLocations, setSelectedLocations] = useState([])
+  const [now, setNow] = useState(new Date())
 
   useEffect(() => {
     let cancelled = false
@@ -189,6 +208,11 @@ export default function App() {
     return () => {
       cancelled = true
     }
+  }, [])
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
   }, [])
 
   const allVenues = useMemo(() => {
@@ -242,6 +266,8 @@ export default function App() {
         location_name: item.location_name || 'Unknown location',
         startMinutes: minutesSinceMidnight(start),
         endMinutes: minutesSinceMidnight(end),
+        startDate: start,
+        endDate: end,
       }
 
       if (!map.has(item.date)) map.set(item.date, [])
@@ -268,6 +294,21 @@ export default function App() {
       })
   }, [filteredItems])
 
+  const nowNext = useMemo(() => {
+    const current = filteredItems
+      .map((i) => ({ ...i, start: toDateTime(i.start_time), end: toDateTime(i.end_time) }))
+      .filter((i) => i.start <= now && i.end >= now)
+      .sort((a, b) => a.end - b.end)
+
+    const upcoming = filteredItems
+      .map((i) => ({ ...i, start: toDateTime(i.start_time), end: toDateTime(i.end_time) }))
+      .filter((i) => i.start > now)
+      .sort((a, b) => a.start - b.start)
+      .slice(0, 2)
+
+    return { current, upcoming }
+  }, [filteredItems, now])
+
   const toggleVenue = (venue) => {
     setSelectedVenues((prev) => {
       if (prev.includes(venue)) return prev.filter((v) => v !== venue)
@@ -290,6 +331,9 @@ export default function App() {
     setSelectedLocations((prev) => (prev.length === allLocations.length ? [] : allLocations))
   }
 
+  const todayIso = now.toISOString().slice(0, 10)
+  const nowMinutes = minutesSinceMidnight(now)
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto w-full max-w-7xl px-3 py-5 md:px-6 md:py-8">
@@ -303,6 +347,55 @@ export default function App() {
             {data.updatedAt ? ` • Updated ${new Date(data.updatedAt).toLocaleString('en-GB')}` : ''}
           </p>
         </header>
+
+        <section className="mb-4 rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200 md:mb-6 md:p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-slate-800">Now / Next</h2>
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-2">
+            <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-200">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Now</p>
+              {nowNext.current.length ? (
+                nowNext.current.slice(0, 2).map((item, idx) => (
+                  <p key={`${item.start_time}-${idx}`} className="mt-1 text-sm text-slate-800">
+                    {item.title} <span className="text-slate-500">({item.location_name})</span>
+                  </p>
+                ))
+              ) : (
+                <p className="mt-1 text-sm text-slate-500">No live sessions right now.</p>
+              )}
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-200">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Next</p>
+              {nowNext.upcoming.length ? (
+                nowNext.upcoming.map((item, idx) => (
+                  <p key={`${item.start_time}-${idx}`} className="mt-1 text-sm text-slate-800">
+                    {item.title}{' '}
+                    <span className="text-slate-500">({item.location_name}, {item.start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })})</span>
+                  </p>
+                ))
+              ) : (
+                <p className="mt-1 text-sm text-slate-500">No upcoming sessions in range.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+            {[
+              ['Lane Swim', 'bg-blue-600'],
+              ['Family Fun', 'bg-emerald-600'],
+              ['Lessons', 'bg-violet-600'],
+              ['Pool Closed', 'bg-red-600'],
+              ['Other', 'bg-slate-700'],
+            ].map(([label, color]) => (
+              <span key={label} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-slate-700">
+                <span className={`h-2 w-2 rounded-full ${color}`} />
+                {label}
+              </span>
+            ))}
+          </div>
+        </section>
 
         <section className="mb-4 rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200 md:mb-6 md:p-4">
           <div className="mb-2 flex items-center justify-between gap-2">
@@ -379,7 +472,7 @@ export default function App() {
 
         <div className="space-y-4 md:space-y-6">
           {grouped.map((day) => (
-            <DayGrid key={day.date} day={day} />
+            <DayGrid key={day.date} day={day} nowMinutes={nowMinutes} isToday={day.date === todayIso} />
           ))}
         </div>
       </div>

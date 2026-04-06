@@ -153,8 +153,8 @@ function DayGrid({ day }) {
                           </p>
                         )}
                       </div>
-                    )
-                  })}
+                    )}
+                  )}
                 </div>
               </li>
             ))}
@@ -169,6 +169,7 @@ export default function App() {
   const [data, setData] = useState({ updatedAt: null, items: [], source: 'loading' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [selectedVenues, setSelectedVenues] = useState([])
 
   useEffect(() => {
     let cancelled = false
@@ -189,14 +190,31 @@ export default function App() {
     }
   }, [])
 
+  const allVenues = useMemo(() => {
+    const set = new Set((data.items ?? []).map((i) => i.venue_name || 'Unknown venue'))
+    return [...set].sort((a, b) => a.localeCompare(b))
+  }, [data.items])
+
+  useEffect(() => {
+    if (allVenues.length && selectedVenues.length === 0) {
+      setSelectedVenues(allVenues)
+    }
+  }, [allVenues, selectedVenues.length])
+
+  const filteredItems = useMemo(() => {
+    const allowed = new Set(selectedVenues)
+    return (data.items ?? []).filter((item) => allowed.has(item.venue_name || 'Unknown venue'))
+  }, [data.items, selectedVenues])
+
   const grouped = useMemo(() => {
     const map = new Map()
 
-    for (const item of data.items ?? []) {
+    for (const item of filteredItems) {
       const start = toDateTime(item.start_time)
       const end = toDateTime(item.end_time)
       const withMinutes = {
         ...item,
+        venue_name: item.venue_name || 'Unknown venue',
         location_name: item.location_name || 'Unknown location',
         startMinutes: minutesSinceMidnight(start),
         endMinutes: minutesSinceMidnight(end),
@@ -224,7 +242,16 @@ export default function App() {
 
         return { date, items, locations }
       })
-  }, [data.items])
+  }, [filteredItems])
+
+  const toggleVenue = (venue) => {
+    setSelectedVenues((prev) => {
+      if (prev.includes(venue)) return prev.filter((v) => v !== venue)
+      return [...prev, venue]
+    })
+  }
+
+  const selectAllVenues = () => setSelectedVenues(allVenues)
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -240,12 +267,45 @@ export default function App() {
           </p>
         </header>
 
+        <section className="mb-4 rounded-xl bg-white p-3 shadow-sm ring-1 ring-slate-200 md:mb-6 md:p-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-slate-800">Venue filters</h2>
+            <button
+              type="button"
+              onClick={selectAllVenues}
+              className="text-xs font-medium text-blue-700 hover:text-blue-800"
+            >
+              Select all
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {allVenues.map((venue) => {
+              const active = selectedVenues.includes(venue)
+              return (
+                <button
+                  key={venue}
+                  type="button"
+                  onClick={() => toggleVenue(venue)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                    active
+                      ? 'border-blue-600 bg-blue-600 text-white'
+                      : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                  }`}
+                >
+                  {venue}
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
         {loading && <p className="text-sm text-slate-600">Loading timetable…</p>}
         {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
         {!loading && !error && grouped.length === 0 && (
           <p className="rounded-lg bg-white p-4 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200">
-            No activities found.
+            No activities found for selected venues.
           </p>
         )}
 

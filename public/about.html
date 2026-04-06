@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About • Edinburgh Leisure Swim Timetables</title>
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#f8fafc; color:#0f172a; }
+      .wrap { max-width: 780px; margin: 0 auto; padding: 24px 16px 48px; }
+      .card { background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 1px 2px rgba(15,23,42,.05); }
+      h1 { margin:0 0 10px; font-size:1.5rem; }
+      p, li { line-height:1.5; color:#334155; }
+      a { color:#2563eb; text-decoration:none; }
+      a:hover { text-decoration:underline; }
+      ul { margin: 10px 0 0 20px; padding:0; }
+      .top { margin-bottom:14px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top"><a href="./">← Back to timetable</a></div>
+      <div class="card">
+        <h1>About this timetable</h1>
+        <p>
+          This page shows Edinburgh Leisure swimming schedules in a cleaner, mobile-friendly timeline view.
+        </p>
+        <ul>
+          <li>Data is fetched from Edinburgh Leisure timetable APIs during GitHub Pages builds.</li>
+          <li>Refresh runs every 2 hours.</li>
+          <li>You can filter by venue and location, and click sessions for details.</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

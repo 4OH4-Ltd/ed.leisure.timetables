@@ -426,7 +426,12 @@ export default function App() {
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto w-full max-w-7xl px-3 py-5 md:px-6 md:py-8">
         <header className="mb-5 md:mb-7">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-4xl">Edinburgh Leisure Timetables</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight md:text-4xl">Edinburgh Leisure Timetables</h1>
+            <a href="./about.html" className="mt-1 text-xs font-medium text-blue-700 hover:text-blue-800">
+              About
+            </a>
+          </div>
           <p className="mt-2 text-sm text-slate-600 md:text-base">
             Royal Commonwealth Pool timetable in a day-by-day grid view.
           </p>

@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 
 const API_URL = 'https://www.edinburghleisure.co.uk/wp-admin/admin-ajax.php'
+const STEP_MINUTES = 15
+const PX_PER_MINUTE = 2
+const TIME_COL_WIDTH = STEP_MINUTES * PX_PER_MINUTE
+const LEFT_COL_WIDTH = 180
 
 const FEEDS = [
   {
@@ -11,6 +15,22 @@ const FEEDS = [
   },
 ]
 
+function toDateTime(value) {
+  return new Date(value.replace(' ', 'T'))
+}
+
+function minutesSinceMidnight(date) {
+  return date.getHours() * 60 + date.getMinutes()
+}
+
+function roundDownToStep(mins, step = STEP_MINUTES) {
+  return Math.floor(mins / step) * step
+}
+
+function roundUpToStep(mins, step = STEP_MINUTES) {
+  return Math.ceil(mins / step) * step
+}
+
 function formatDay(isoDate) {
   const d = new Date(`${isoDate}T00:00:00`)
   return new Intl.DateTimeFormat('en-GB', {
@@ -20,13 +40,14 @@ function formatDay(isoDate) {
   }).format(d)
 }
 
-function formatTime(dateTime) {
-  const d = new Date(dateTime.replace(' ', 'T'))
-  return new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(d)
+function formatTimeLabel(minutes) {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+function formatTimeRange(start, end) {
+  return `${formatTimeLabel(start)}–${formatTimeLabel(end)}`
 }
 
 async function loadData() {
@@ -36,7 +57,6 @@ async function loadData() {
     return res.json()
   }
 
-  // Try direct API first. If browser CORS blocks it, fall back to static JSON.
   try {
     const all = []
 
@@ -46,12 +66,9 @@ async function loadData() {
       body.append('category_id', feed.categoryId)
       body.append('post_id', feed.postId)
 
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body,
-      })
-
+      const res = await fetch(API_URL, { method: 'POST', body })
       if (!res.ok) throw new Error(`API error: ${res.status}`)
+
       const json = await res.json()
       const table = json?.data?.table ?? []
 
@@ -76,6 +93,119 @@ async function loadData() {
   }
 }
 
+function DayGrid({ day }) {
+  const minStart = Math.min(...day.items.map((i) => i.startMinutes))
+  const maxEnd = Math.max(...day.items.map((i) => i.endMinutes))
+  const dayStart = roundDownToStep(minStart)
+  const dayEnd = roundUpToStep(maxEnd)
+  const totalMinutes = dayEnd - dayStart
+
+  const ticks = []
+  for (let t = dayStart; t <= dayEnd; t += STEP_MINUTES) ticks.push(t)
+
+  return (
+    <section className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+      <div className="border-b border-slate-200 bg-slate-100/70 px-4 py-3 md:px-5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700 md:text-base">
+          {formatDay(day.date)}
+        </h2>
+        <p className="mt-1 text-xs text-slate-500">{formatTimeRange(dayStart, dayEnd)}</p>
+      </div>
+
+      <div className="overflow-x-auto">
+        <div
+          className="min-w-full"
+          style={{ minWidth: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
+        >
+          <div
+            className="sticky top-0 z-10 flex border-b border-slate-200 bg-white"
+            style={{ width: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
+          >
+            <div
+              className="shrink-0 border-r border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500"
+              style={{ width: LEFT_COL_WIDTH }}
+            >
+              Session
+            </div>
+
+            <div className="relative shrink-0" style={{ width: totalMinutes * PX_PER_MINUTE }}>
+              {ticks.map((t) => {
+                const x = (t - dayStart) * PX_PER_MINUTE
+                const isHour = t % 60 === 0
+                return (
+                  <div key={t}>
+                    <div
+                      className={`absolute top-0 h-full border-l ${isHour ? 'border-slate-300' : 'border-slate-200'}`}
+                      style={{ left: x }}
+                    />
+                    {isHour && (
+                      <span
+                        className="absolute top-2 -translate-x-1/2 text-[11px] font-medium text-slate-600"
+                        style={{ left: x }}
+                      >
+                        {formatTimeLabel(t)}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+              <div className="h-10" />
+            </div>
+          </div>
+
+          <ul className="divide-y divide-slate-100">
+            {day.items.map((item, idx) => {
+              const left = (item.startMinutes - dayStart) * PX_PER_MINUTE
+              const width = Math.max((item.endMinutes - item.startMinutes) * PX_PER_MINUTE, 6)
+
+              return (
+                <li
+                  key={`${item.start_time}-${item.title}-${idx}`}
+                  className="flex"
+                  style={{ width: LEFT_COL_WIDTH + totalMinutes * PX_PER_MINUTE }}
+                >
+                  <div
+                    className="shrink-0 border-r border-slate-200 px-3 py-3"
+                    style={{ width: LEFT_COL_WIDTH }}
+                  >
+                    <p className="text-xs font-medium text-slate-900">{item.title}</p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {formatTimeRange(item.startMinutes, item.endMinutes)}
+                    </p>
+                  </div>
+
+                  <div className="relative h-16 shrink-0" style={{ width: totalMinutes * PX_PER_MINUTE }}>
+                    {ticks.map((t) => {
+                      const x = (t - dayStart) * PX_PER_MINUTE
+                      const isHour = t % 60 === 0
+                      return (
+                        <div
+                          key={t}
+                          className={`absolute top-0 h-full border-l ${isHour ? 'border-slate-200' : 'border-slate-100'}`}
+                          style={{ left: x }}
+                        />
+                      )
+                    })}
+
+                    <div
+                      className="absolute top-2 bottom-2 overflow-hidden rounded-md bg-blue-600/90 px-2 py-1 text-[11px] text-white shadow-sm"
+                      style={{ left, width }}
+                      title={`${item.title} • ${formatTimeRange(item.startMinutes, item.endMinutes)}`}
+                    >
+                      <p className="truncate font-medium">{item.title}</p>
+                      {item.subtitle && <p className="truncate text-blue-100">{item.subtitle}</p>}
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function App() {
   const [data, setData] = useState({ updatedAt: null, items: [], source: 'loading' })
   const [loading, setLoading] = useState(true)
@@ -83,6 +213,7 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false
+
     ;(async () => {
       try {
         const d = await loadData()
@@ -101,29 +232,39 @@ export default function App() {
 
   const grouped = useMemo(() => {
     const map = new Map()
+
     for (const item of data.items ?? []) {
+      const start = toDateTime(item.start_time)
+      const end = toDateTime(item.end_time)
+      const withMinutes = {
+        ...item,
+        startMinutes: minutesSinceMidnight(start),
+        endMinutes: minutesSinceMidnight(end),
+      }
+
       if (!map.has(item.date)) map.set(item.date, [])
-      map.get(item.date).push(item)
+      map.get(item.date).push(withMinutes)
     }
 
     return [...map.entries()]
       .sort(([a], [b]) => new Date(a) - new Date(b))
       .map(([date, items]) => ({
         date,
-        items: items.sort((x, y) => new Date(x.start_time) - new Date(y.start_time)),
+        items: items.sort((x, y) => x.startMinutes - y.startMinutes),
       }))
   }, [data.items])
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="mx-auto w-full max-w-5xl px-4 py-6 md:px-6 md:py-10">
-        <header className="mb-6 md:mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-4xl">Pool Timetable</h1>
+      <div className="mx-auto w-full max-w-7xl px-3 py-5 md:px-6 md:py-8">
+        <header className="mb-5 md:mb-7">
+          <h1 className="text-2xl font-semibold tracking-tight md:text-4xl">Edinburgh Leisure Timetables</h1>
           <p className="mt-2 text-sm text-slate-600 md:text-base">
-            Royal Commonwealth Pool schedule grouped by day.
+            Royal Commonwealth Pool timetable in a day-by-day grid view.
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Source: {data.source} {data.updatedAt ? `• Updated ${new Date(data.updatedAt).toLocaleString('en-GB')}` : ''}
+            Source: {data.source}
+            {data.updatedAt ? ` • Updated ${new Date(data.updatedAt).toLocaleString('en-GB')}` : ''}
           </p>
         </header>
 
@@ -138,29 +279,7 @@ export default function App() {
 
         <div className="space-y-4 md:space-y-6">
           {grouped.map((day) => (
-            <section key={day.date} className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-              <div className="border-b border-slate-200 bg-slate-100/60 px-4 py-3 md:px-5">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700 md:text-base">
-                  {formatDay(day.date)}
-                </h2>
-              </div>
-
-              <ul className="divide-y divide-slate-100">
-                {day.items.map((item, idx) => (
-                  <li key={`${item.start_time}-${item.title}-${idx}`} className="px-4 py-3 md:px-5 md:py-4">
-                    <div className="flex flex-col gap-1 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-slate-900 md:text-base">{item.title}</p>
-                        {item.subtitle && <p className="mt-0.5 text-xs text-slate-600 md:text-sm">{item.subtitle}</p>}
-                      </div>
-                      <p className="text-sm font-semibold text-slate-700 md:ml-4 md:min-w-36 md:text-right">
-                        {formatTime(item.start_time)}–{formatTime(item.end_time)}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <DayGrid key={day.date} day={day} />
           ))}
         </div>
       </div>

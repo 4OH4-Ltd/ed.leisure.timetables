@@ -40,4 +40,4 @@ GitHub Pages deploys automatically via `.github/workflows/deploy-pages.yml` on:
 
 - pushes to `main`
 - manual run (`workflow_dispatch`)
-- every 30 minutes (scheduled refresh)
+- every 2 hours (scheduled refresh)

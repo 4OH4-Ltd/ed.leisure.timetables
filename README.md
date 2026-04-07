@@ -18,6 +18,12 @@ The repo is preconfigured with multiple pool venues:
 - Dalry Swim Centre (`3260`)
 - Glenogle Swim Centre (`3263`)
 - Leith Victoria Swim Centre (`3266`)
+- Portobello Swim Centre (`3270`)
+- Warrender Swim Centre (`3277`)
+- Gracemount Leisure Centre (`3262`)
+- Currie Community High School (`10849`)
+- Queensferry High School (`3271`)
+- Wester Hailes High School (`3276`)
 
 More feeds can be added in `scripts/fetch-schedules.mjs`.
 

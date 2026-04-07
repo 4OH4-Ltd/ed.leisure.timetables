@@ -40,6 +40,42 @@ const FEEDS = [
     categoryId: '34',
     postId: '3266',
   },
+  {
+    key: 'portobello-pool',
+    name: 'Portobello Swim Centre — Pool Timetable',
+    categoryId: '34',
+    postId: '3270',
+  },
+  {
+    key: 'warrender-pool',
+    name: 'Warrender Swim Centre — Pool Timetable',
+    categoryId: '34',
+    postId: '3277',
+  },
+  {
+    key: 'gracemount-pool',
+    name: 'Gracemount Leisure Centre — Pool Timetable',
+    categoryId: '34',
+    postId: '3262',
+  },
+  {
+    key: 'currie-pool',
+    name: 'Currie Community High School — Pool Timetable',
+    categoryId: '34',
+    postId: '10849',
+  },
+  {
+    key: 'queensferry-pool',
+    name: 'Queensferry High School — Pool Timetable',
+    categoryId: '34',
+    postId: '3271',
+  },
+  {
+    key: 'wester-hailes-pool',
+    name: 'Wester Hailes High School — Pool Timetable',
+    categoryId: '34',
+    postId: '3276',
+  },
 ]
 
 function deriveSignupUrl(slot) {
@@ -77,7 +113,11 @@ async function fetchFeed(feed) {
   const res = await fetch(API_URL, {
     method: 'POST',
     body: form,
-    headers: { accept: 'application/json' },
+    headers: {
+      accept: 'application/json',
+      cookie: 'human_ok=1',
+      'user-agent': 'ed-leisure-timetables-fetch/1.0 (+github-actions)',
+    },
   })
 
   if (!res.ok) {

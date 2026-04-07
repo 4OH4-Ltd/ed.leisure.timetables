@@ -1,3 +1,17 @@
+# [1.2.0](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.3...v1.2.0) (2026-04-07)
+
+
+### Bug Fixes
+
+* **about:** add browser-based dark mode styles ([530b81a](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/530b81a52d3826549736aaef4df5cc03baabf361))
+* **deploy:** use relative base path for custom-domain pages ([c91c646](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/c91c64685080e6edc5a5fa4031ff00d3a3133f0d))
+* **ui:** keep session blocks full-height while expanding overlap rows ([42aa3ea](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/42aa3ea3dd59e52abb9c8663d54c9641b62aad2d))
+
+
+### Features
+
+* **data:** add remaining Edinburgh swim venues to timetable feeds ([5be0e78](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/5be0e781ffdbe4d83c70346308645123b327d561))
+
 ## [1.1.4](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.3...v1.1.4) (2026-04-07)
 
 

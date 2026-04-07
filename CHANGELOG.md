@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.2.0...v1.2.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* **timezone:** normalize timetable display to Europe/London with UTC fallback fields ([9408d97](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/9408d97ef8dcc4cbd6ad4581cb31b5d8c7aa67ff))
+
 # [1.2.0](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.1.3...v1.2.0) (2026-04-07)
 
 

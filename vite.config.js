@@ -6,7 +6,7 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 
 export default defineConfig({
   plugins: [react()],
-  base: '/ed.leisure.timetables/',
+  base: './',
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },

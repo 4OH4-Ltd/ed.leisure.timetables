@@ -78,6 +78,12 @@ const FEEDS = [
   },
 ]
 
+function parseDurationMinutes(durationText) {
+  if (typeof durationText !== 'string') return null
+  const m = durationText.match(/(\d+)/)
+  return m ? Number(m[1]) : null
+}
+
 function deriveSignupUrl(slot) {
   if (typeof slot?.roller_checkout === 'string' && /^https?:\/\//.test(slot.roller_checkout)) {
     return slot.roller_checkout
@@ -130,11 +136,21 @@ async function fetchFeed(feed) {
 
   for (const day of table) {
     for (const slot of day.slots ?? []) {
+      const startUtc = slot?.slot_reference?.StartDateTime || null
+      const durationMinutes = parseDurationMinutes(slot?.duration)
+      const endUtc =
+        startUtc && Number.isFinite(durationMinutes)
+          ? new Date(new Date(startUtc).getTime() + durationMinutes * 60_000).toISOString()
+          : null
+
       items.push({
         feed: feed.name,
         date: day.date,
         start_time: slot.start_time,
         end_time: slot.end_time,
+        start_time_utc: startUtc,
+        end_time_utc: endUtc,
+        duration_minutes: durationMinutes,
         venue_name: slot.venue_name || feed.name,
         location_name: slot.location_name || 'Unknown location',
         title: slot.title,

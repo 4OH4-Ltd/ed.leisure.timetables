@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 const APP_VERSION = __APP_VERSION__
+const DISPLAY_TZ = 'Europe/London'
 const STEP_MINUTES = 15
 const PX_PER_MINUTE = 2
 const LEFT_COL_WIDTH = 140
@@ -9,8 +10,30 @@ function toDateTime(value) {
   return new Date(value.replace(' ', 'T'))
 }
 
-function minutesSinceMidnight(date) {
-  return date.getHours() * 60 + date.getMinutes()
+function getItemStartDate(item) {
+  return item?.start_time_utc ? new Date(item.start_time_utc) : toDateTime(item.start_time)
+}
+
+function getItemEndDate(item) {
+  return item?.end_time_utc ? new Date(item.end_time_utc) : toDateTime(item.end_time)
+}
+
+function timePartsInLondon(date) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: DISPLAY_TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date)
+
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? 0)
+  const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? 0)
+  return { hour, minute }
+}
+
+function minutesSinceMidnightInLondon(date) {
+  const { hour, minute } = timePartsInLondon(date)
+  return hour * 60 + minute
 }
 
 function roundDownToStep(mins, step = STEP_MINUTES) {
@@ -389,14 +412,14 @@ export default function App() {
     const map = new Map()
 
     for (const item of filteredItems) {
-      const start = toDateTime(item.start_time)
-      const end = toDateTime(item.end_time)
+      const start = getItemStartDate(item)
+      const end = getItemEndDate(item)
       const withMinutes = {
         ...item,
         venue_name: item.venue_name || 'Unknown venue',
         location_name: item.location_name || 'Unknown location',
-        startMinutes: minutesSinceMidnight(start),
-        endMinutes: minutesSinceMidnight(end),
+        startMinutes: minutesSinceMidnightInLondon(start),
+        endMinutes: minutesSinceMidnightInLondon(end),
       }
 
       if (!map.has(item.date)) map.set(item.date, [])
@@ -449,8 +472,8 @@ export default function App() {
     setSelectedLocations((prev) => (prev.length === allLocations.length ? [] : allLocations))
   }
 
-  const todayIso = now.toISOString().slice(0, 10)
-  const nowMinutes = minutesSinceMidnight(now)
+  const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: DISPLAY_TZ }).format(now)
+  const nowMinutes = minutesSinceMidnightInLondon(now)
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -465,7 +488,7 @@ export default function App() {
           <></>
           <p className="mt-1 text-xs text-slate-500">
             Version: v{APP_VERSION} • Source: {data.source}
-            {data.updatedAt ? ` • Updated ${new Date(data.updatedAt).toLocaleString('en-GB')}` : ''}
+            {data.updatedAt ? ` • Updated ${new Date(data.updatedAt).toLocaleString('en-GB', { timeZone: DISPLAY_TZ })}` : ''}
           </p>
         </header>
 
@@ -628,11 +651,11 @@ export default function App() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-slate-500">Start</dt>
-                  <dd className="text-slate-900">{toDateTime(selectedItem.start_time).toLocaleString('en-GB')}</dd>
+                  <dd className="text-slate-900">{getItemStartDate(selectedItem).toLocaleString('en-GB', { timeZone: DISPLAY_TZ })}</dd>
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-slate-500">End</dt>
-                  <dd className="text-slate-900">{toDateTime(selectedItem.end_time).toLocaleString('en-GB')}</dd>
+                  <dd className="text-slate-900">{getItemEndDate(selectedItem).toLocaleString('en-GB', { timeZone: DISPLAY_TZ })}</dd>
                 </div>
               </div>
               {selectedItem.sign_up_url && (

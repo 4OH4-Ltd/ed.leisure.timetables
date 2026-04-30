@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.2.1...v1.3.0) (2026-04-30)
+
+
+### Features
+
+* Implements synchoronised horizontal scrolling ([793fe41](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/793fe4138572f73c8b4ca4cd77bc5566651558f0))
+
 ## [1.2.1](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.2.0...v1.2.1) (2026-04-07)
 
 

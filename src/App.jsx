@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const APP_VERSION = __APP_VERSION__
 const DISPLAY_TZ = 'Europe/London'
@@ -125,7 +125,7 @@ function stackItemsIntoLanes(items) {
   })
 }
 
-function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScrollToNow }) {
+function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScrollToNow, registerScroller }) {
   const scrollerRef = useRef(null)
   const didAutoScrollRef = useRef(false)
 
@@ -151,6 +151,12 @@ function DayGrid({ day, nowMinutes, isToday, onSelectItem, compactMode, autoScro
     scroller.scrollLeft = target
     didAutoScrollRef.current = true
   }, [autoScrollToNow, isToday, nowX, showNowLine])
+
+  useEffect(() => {
+    const scroller = scrollerRef.current
+    if (!scroller) return
+    return registerScroller(scroller)
+  }, [registerScroller])
 
   return (
     <section className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
@@ -297,6 +303,86 @@ export default function App() {
   const venuesInitRef = useRef(false)
   const locationsInitRef = useRef(false)
   const autoScrollRef = useRef(true)
+  const dayScrollersRef = useRef(new Set())
+  const suppressedScrollEventsRef = useRef(new WeakMap())
+  const scrollSyncRef = useRef({
+    isSyncing: false,
+    source: null,
+    rafId: 0,
+    pendingLeft: 0,
+    lastLeft: 0,
+  })
+
+  const clampScrollLeft = (node, left) => {
+    const max = Math.max(node.scrollWidth - node.clientWidth, 0)
+    return Math.min(Math.max(left, 0), max)
+  }
+
+  const flushSyncedScroll = useCallback(() => {
+    const sync = scrollSyncRef.current
+    const source = sync.source
+    const left = sync.pendingLeft
+
+    sync.rafId = 0
+    if (!source) return
+
+    sync.isSyncing = true
+    for (const node of dayScrollersRef.current) {
+      if (node === source) continue
+      const nextLeft = clampScrollLeft(node, left)
+      if (Math.abs(node.scrollLeft - nextLeft) > 0.5) {
+        suppressedScrollEventsRef.current.set(node, nextLeft)
+        node.scrollLeft = nextLeft
+      }
+    }
+    sync.lastLeft = left
+    sync.isSyncing = false
+    sync.source = null
+  }, [])
+
+  const handleDayRowScroll = useCallback(
+    (sourceNode) => {
+      const sync = scrollSyncRef.current
+      if (!sourceNode || !dayScrollersRef.current.has(sourceNode)) return
+
+      const expectedLeft = suppressedScrollEventsRef.current.get(sourceNode)
+      if (typeof expectedLeft === 'number') {
+        suppressedScrollEventsRef.current.delete(sourceNode)
+        if (Math.abs(sourceNode.scrollLeft - expectedLeft) <= 0.5) return
+      }
+
+      if (sync.isSyncing && sync.source !== sourceNode) return
+
+      sync.source = sourceNode
+      sync.pendingLeft = sourceNode.scrollLeft
+      sync.lastLeft = sourceNode.scrollLeft
+
+      if (sync.rafId) return
+      sync.rafId = requestAnimationFrame(flushSyncedScroll)
+    },
+    [flushSyncedScroll]
+  )
+
+  const registerScroller = useCallback(
+    (node) => {
+      if (!node) return () => {}
+
+      dayScrollersRef.current.add(node)
+      node.scrollLeft = clampScrollLeft(node, scrollSyncRef.current.lastLeft)
+
+      const onScroll = () => handleDayRowScroll(node)
+      node.addEventListener('scroll', onScroll, { passive: true })
+
+      return () => {
+        node.removeEventListener('scroll', onScroll)
+        dayScrollersRef.current.delete(node)
+
+        const sync = scrollSyncRef.current
+        if (sync.source === node) sync.source = null
+      }
+    },
+    [handleDayRowScroll]
+  )
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -319,6 +405,13 @@ export default function App() {
 
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      const sync = scrollSyncRef.current
+      if (sync.rafId) cancelAnimationFrame(sync.rafId)
     }
   }, [])
 
@@ -596,6 +689,7 @@ export default function App() {
               onSelectItem={setSelectedItem}
               compactMode={compactMode}
               autoScrollToNow={autoScrollRef.current}
+              registerScroller={registerScroller}
             />
           ))}
         </div>

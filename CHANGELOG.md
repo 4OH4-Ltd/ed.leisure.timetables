@@ -1,3 +1,11 @@
+## [1.3.1](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.3.0...v1.3.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* **ci:** enforce full-tree critical audit gate ([1c8fdd4](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/1c8fdd4b306ec72cc73eddfd9704848f0d3e6756))
+* CodeQL / Workflow does not contain permissions ([3c68c75](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/3c68c75c39d032731db8c0d55b2af0f9477a9a54))
+
 # [1.3.0](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.2.1...v1.3.0) (2026-04-30)
 
 

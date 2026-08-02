@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.3.1...v1.3.2) (2026-08-02)
+
+
+### Bug Fixes
+
+* **timetable:** fetch schedules from REST endpoint ([#13](https://github.com/4OH4-Ltd/ed.leisure.timetables/issues/13)) ([bb6c78a](https://github.com/4OH4-Ltd/ed.leisure.timetables/commit/bb6c78a526daefe4eeba7ded6cf0c07f83adfad9))
+
 ## [1.3.1](https://github.com/4OH4-Ltd/ed.leisure.timetables/compare/v1.3.0...v1.3.1) (2026-05-27)
 
 

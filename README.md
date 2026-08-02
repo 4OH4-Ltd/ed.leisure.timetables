@@ -6,7 +6,7 @@ Clean timetable viewer built with Vite + React + Tailwind CSS.
 
 The app uses Edinburgh Leisure's timetable endpoint:
 
-- `action=load_category_schedules`
+- `GET /wp-json/el/v1/timetable/category`
 - `category_id=34`
 - `post_id=<venue id>`
 

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-const API_URL = 'https://www.edinburghleisure.co.uk/wp-admin/admin-ajax.php'
+const API_URL = 'https://www.edinburghleisure.co.uk/wp-json/el/v1/timetable/category'
 
 const FEEDS = [
   {
@@ -111,17 +111,13 @@ function deriveSignupUrl(slot) {
 }
 
 async function fetchFeed(feed) {
-  const form = new FormData()
-  form.append('action', 'load_category_schedules')
-  form.append('category_id', feed.categoryId)
-  form.append('post_id', feed.postId)
+  const url = new URL(API_URL)
+  url.searchParams.set('category_id', feed.categoryId)
+  url.searchParams.set('post_id', feed.postId)
 
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    body: form,
+  const res = await fetch(url, {
     headers: {
       accept: 'application/json',
-      cookie: 'human_ok=1',
       'user-agent': 'ed-leisure-timetables-fetch/1.0 (+github-actions)',
     },
   })
@@ -131,7 +127,7 @@ async function fetchFeed(feed) {
   }
 
   const json = await res.json()
-  const table = json?.data?.table ?? []
+  const table = json?.table ?? []
   const items = []
 
   for (const day of table) {

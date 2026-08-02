@@ -409,8 +409,9 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    const sync = scrollSyncRef.current
+
     return () => {
-      const sync = scrollSyncRef.current
       if (sync.rafId) cancelAnimationFrame(sync.rafId)
     }
   }, [])

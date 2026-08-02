@@ -294,15 +294,16 @@ export default function App() {
   const [data, setData] = useState({ updatedAt: null, items: [], source: 'loading' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [selectedVenues, setSelectedVenues] = useState([])
-  const [selectedLocations, setSelectedLocations] = useState([])
+  const [selectedVenuesOverride, setSelectedVenuesOverride] = useState(null)
+  const [selectedLocationsOverride, setSelectedLocationsOverride] = useState(null)
   const [selectedItem, setSelectedItem] = useState(null)
-  const [compactMode, setCompactMode] = useState(false)
+  const [compactMode, setCompactMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('compact') === '1'
+  })
   const [now, setNow] = useState(new Date())
+  const [autoScrollToNow, setAutoScrollToNow] = useState(true)
 
-  const venuesInitRef = useRef(false)
-  const locationsInitRef = useRef(false)
-  const autoScrollRef = useRef(true)
   const dayScrollersRef = useRef(new Set())
   const suppressedScrollEventsRef = useRef(new WeakMap())
   const scrollSyncRef = useRef({
@@ -385,11 +386,6 @@ export default function App() {
   )
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    setCompactMode(params.get('compact') === '1')
-  }, [])
-
-  useEffect(() => {
     let cancelled = false
 
     ;(async () => {
@@ -426,27 +422,18 @@ export default function App() {
     return [...set].sort((a, b) => a.localeCompare(b))
   }, [data.items])
 
-  useEffect(() => {
-    if (!allVenues.length) return
+  const selectedVenues = useMemo(() => {
+    if (!allVenues.length) return []
+    if (selectedVenuesOverride) return selectedVenuesOverride.filter((v) => allVenues.includes(v))
 
-    if (!venuesInitRef.current) {
-      const params = new URLSearchParams(window.location.search)
-      const fromUrl = parseCsvParam(params, 'venues')
-      const valid = fromUrl.filter((v) => allVenues.includes(v))
+    const params = new URLSearchParams(window.location.search)
+    const fromUrl = parseCsvParam(params, 'venues')
+    const valid = fromUrl.filter((v) => allVenues.includes(v))
+    if (valid.length) return [valid[0]]
 
-      if (valid.length) {
-        setSelectedVenues([valid[0]])
-      } else {
-        const defaultVenue = 'Royal Commonwealth Pool'
-        setSelectedVenues(allVenues.includes(defaultVenue) ? [defaultVenue] : [])
-      }
-
-      venuesInitRef.current = true
-      return
-    }
-
-    setSelectedVenues((prev) => prev.filter((v) => allVenues.includes(v)))
-  }, [allVenues])
+    const defaultVenue = 'Royal Commonwealth Pool'
+    return allVenues.includes(defaultVenue) ? [defaultVenue] : []
+  }, [allVenues, selectedVenuesOverride])
 
   const venueFilteredItems = useMemo(() => {
     if (!selectedVenues.length) return []
@@ -459,26 +446,17 @@ export default function App() {
     return [...set].sort((a, b) => a.localeCompare(b))
   }, [venueFilteredItems])
 
-  useEffect(() => {
-    if (!allLocations.length) {
-      setSelectedLocations([])
-      return
-    }
+  const selectedLocations = useMemo(() => {
+    if (!allLocations.length) return []
+    if (selectedLocationsOverride) return selectedLocationsOverride.filter((loc) => allLocations.includes(loc))
 
-    if (!locationsInitRef.current) {
-      const params = new URLSearchParams(window.location.search)
-      const fromUrl = parseCsvParam(params, 'locations')
-      const valid = fromUrl.filter((v) => allLocations.includes(v))
-      setSelectedLocations(valid)
-      locationsInitRef.current = true
-      return
-    }
-
-    setSelectedLocations((prev) => prev.filter((loc) => allLocations.includes(loc)))
-  }, [allLocations])
+    const params = new URLSearchParams(window.location.search)
+    const fromUrl = parseCsvParam(params, 'locations')
+    return fromUrl.filter((v) => allLocations.includes(v))
+  }, [allLocations, selectedLocationsOverride])
 
   useEffect(() => {
-    if (!venuesInitRef.current) return
+    if (!allVenues.length) return
 
     const params = new URLSearchParams(window.location.search)
 
@@ -494,7 +472,7 @@ export default function App() {
     const qs = params.toString()
     const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ''}`
     window.history.replaceState({}, '', nextUrl)
-  }, [selectedVenues, selectedLocations, compactMode])
+  }, [allVenues.length, selectedVenues, selectedLocations, compactMode])
 
   const filteredItems = useMemo(() => {
     if (!selectedLocations.length) return venueFilteredItems
@@ -541,29 +519,27 @@ export default function App() {
   }, [filteredItems])
 
   const toggleVenue = (venue) => {
-    autoScrollRef.current = false
-    setSelectedVenues((prev) => {
-      if (prev.length === 1 && prev[0] === venue) return []
-      return [venue]
-    })
+    setAutoScrollToNow(false)
+    setSelectedVenuesOverride(selectedVenues.length === 1 && selectedVenues[0] === venue ? [] : [venue])
   }
 
   const clearVenueSelection = () => {
-    autoScrollRef.current = false
-    setSelectedVenues([])
+    setAutoScrollToNow(false)
+    setSelectedVenuesOverride([])
   }
 
   const toggleLocation = (location) => {
-    autoScrollRef.current = false
-    setSelectedLocations((prev) => {
-      if (prev.includes(location)) return prev.filter((l) => l !== location)
-      return [...prev, location]
-    })
+    setAutoScrollToNow(false)
+    setSelectedLocationsOverride(
+      selectedLocations.includes(location)
+        ? selectedLocations.filter((l) => l !== location)
+        : [...selectedLocations, location]
+    )
   }
 
   const selectAllLocations = () => {
-    autoScrollRef.current = false
-    setSelectedLocations((prev) => (prev.length === allLocations.length ? [] : allLocations))
+    setAutoScrollToNow(false)
+    setSelectedLocationsOverride(selectedLocations.length === allLocations.length ? [] : allLocations)
   }
 
   const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: DISPLAY_TZ }).format(now)
@@ -689,7 +665,7 @@ export default function App() {
               isToday={day.date === todayIso}
               onSelectItem={setSelectedItem}
               compactMode={compactMode}
-              autoScrollToNow={autoScrollRef.current}
+              autoScrollToNow={autoScrollToNow}
               registerScroller={registerScroller}
             />
           ))}
